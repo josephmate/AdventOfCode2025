@@ -46,5 +46,35 @@ def partA (fileSuffix : String) : IO Unit := do
   IO.println s!"Final position: ({finalState})"
 
 
+
+private def processInstructionB (state : Int × Int) (instruction : Char × Int) : IO (Int × Int) := do
+  let (dir, distance) := instruction
+  let (posn, count) := state
+  let nextMove := match dir with
+  | 'R' => posn + distance
+  | 'L' => posn - distance
+  | _ => posn
+
+
+
+  let overages := nextMove / 100
+  let (fixedMove, shouldCount) := match nextMove with
+  | m =>
+    if m >= 100 then
+      (m-100, overages)
+    else if m < 0 then
+      (m+100, overages+1)
+    else if m == 0 then
+      (m, overages + 1)
+    else
+      (m, 0)
+
+  IO.println s!"{fixedMove}, {count + shouldCount}"
+  return (fixedMove, count + shouldCount)
+
+
 def partB (fileSuffix : String) : IO Unit := do
-  IO.println "Running Day 1, Part B"
+  IO.println "Running Day 1, Part A"
+  let instructions ← readInputFile fileSuffix
+  let finalState ← instructions.foldlM processInstructionB ((50, 0) : Int × Int)
+  IO.println s!"Final position: ({finalState})"
