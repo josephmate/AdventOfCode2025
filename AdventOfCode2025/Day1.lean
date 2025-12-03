@@ -44,6 +44,9 @@ def partA (fileSuffix : String) : IO Unit := do
   let instructions ← readInputFile fileSuffix
   let finalState ← instructions.foldlM processInstruction ((50, 0) : Int × Int)
   IO.println s!"Final position: ({finalState})"
+  if fileSuffix.toSlice.contains "sample" then
+    let contents ← IO.FS.readFile s!"data/day_01_{fileSuffix}.txt"
+    IO.println s!"expected position: ({contents})"
 
 
 
@@ -57,13 +60,20 @@ private def processInstructionB (state : Int × Int) (instruction : Char × Int)
 
 
 
-  let overages := nextMove / 100
+  let overages :=
+    if nextMove > 0 then
+      nextMove / 100
+    else
+      -1 * nextMove / 100
   let (fixedMove, shouldCount) := match nextMove with
   | m =>
     if m >= 100 then
-      (m-100, overages)
+      (m-100*overages, overages)
     else if m < 0 then
-      (m+100, overages+1)
+      if posn == 0 then
+        (m+100*overages, overages) -- already counted in prev iteration
+      else
+        (m+100*overages, overages+1)
     else if m == 0 then
       (m, overages + 1)
     else
@@ -78,3 +88,6 @@ def partB (fileSuffix : String) : IO Unit := do
   let instructions ← readInputFile fileSuffix
   let finalState ← instructions.foldlM processInstructionB ((50, 0) : Int × Int)
   IO.println s!"Final position: ({finalState})"
+  if fileSuffix.toSlice.contains "sample" then
+    let contents ← IO.FS.readFile s!"data/day_01_{fileSuffix}_expected.txt"
+    IO.println s!"expected position: ({contents})"
