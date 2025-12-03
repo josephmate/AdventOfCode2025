@@ -8,3 +8,7 @@ name = "AdventOfCode2025"
 [[lean_exe]]
 name = "adventofcode2025"
 root = "Main"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
