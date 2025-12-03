@@ -71,9 +71,9 @@ private def processInstructionB (state : Int × Int) (instruction : Char × Int)
       (m-100*overages, overages)
     else if m < 0 then
       if posn == 0 then
-        (m+100*overages, overages) -- already counted in prev iteration
+        (m+100*(overages+1), overages) -- already counted in prev iteration
       else
-        (m+100*overages, overages+1)
+        (m+100*(overages+1), overages+1)
     else if m == 0 then
       (m, overages + 1)
     else
