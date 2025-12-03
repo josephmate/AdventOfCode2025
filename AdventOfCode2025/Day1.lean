@@ -65,21 +65,28 @@ private def processInstructionB (state : Int × Int) (instruction : Char × Int)
       nextMove / 100
     else
       -1 * nextMove / 100
+
+  IO.println s!"{nextMove}, {overages}"
+
   let (fixedMove, shouldCount) := match nextMove with
   | m =>
     if m >= 100 then
       (m-100*overages, overages)
     else if m < 0 then
+      let next :=
+        if m % 100 == 0 then
+          m+100*(overages+0)
+        else
+          m+100*(overages+1)
       if posn == 0 then
-        (m+100*(overages+1), overages) -- already counted in prev iteration
+        (next, overages) -- already counted in prev iteration
       else
-        (m+100*(overages+1), overages+1)
+        (next, overages+1)
     else if m == 0 then
       (m, overages + 1)
     else
       (m, 0)
 
-  IO.println s!"{fixedMove}, {count + shouldCount}"
   return (fixedMove, count + shouldCount)
 
 
@@ -91,3 +98,35 @@ def partB (fileSuffix : String) : IO Unit := do
   if fileSuffix.toSlice.contains "sample" then
     let contents ← IO.FS.readFile s!"data/day_01_{fileSuffix}_expected.txt"
     IO.println s!"expected position: ({contents})"
+
+private def testInstr (name : String) (state : Int × Int) (instr : Char × Int) (expected : Int × Int) : IO Unit := do
+    let actual ← processInstructionB state instr
+    if actual == expected then
+      IO.println s!"✓ {name}"
+    else
+      IO.println s!"✗ {name}"
+      IO.println s!"  Expected: {expected}"
+      IO.println s!"  Actual:   {actual}"
+
+#eval do
+  IO.println "=== Day1 Tests ==="
+  --      ______________________________________________________________
+  --     /    /    /       / / /          |      \   \   \      \   \   \
+  --  -101  -100 -99      -1 0 1         50      99 100 101    199 200 201
+  testInstr     "R49" (50, 0) ('R',   49) (99,  0)
+  testInstr     "R50" (50, 0) ('R',   50) ( 0,  1)
+  testInstr     "R51" (50, 0) ('R',   51) ( 1,  1)
+  testInstr "R50,  99" (50, 0) ('R',50+99) (99, 1)
+  testInstr "R50, 100" (50, 0) ('R',50+100) (0, 2)
+  testInstr "R50, 101" (50, 0) ('R',50+101) (1, 2)
+  testInstr     "L49" (50, 0) ('L',   49) ( 1,  0)
+  testInstr     "L50" (50, 0) ('L',   50) ( 0,  1)
+  testInstr     "L51" (50, 0) ('L',   51) (99,  1)
+  testInstr "L50,  99" (50, 0) ('L',50+99) (1, 1)
+  testInstr "L50, 100" (50, 0) ('L',50+100) (0, 2)
+  testInstr "L50, 101" (50, 0) ('L',50+101) (99, 2)
+  -- samples provided by AoC
+  testInstr   "R1000" (50, 0) ('R', 1000) (50, 10)
+  testInstr   "L1000" (50, 0) ('L', 1000) (50, 10)
+  IO.println "Tests complete!"
+end Day1
