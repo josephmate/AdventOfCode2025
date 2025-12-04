@@ -74,7 +74,6 @@ private partial def generateErrorsComplexRecurseInner (current : Int) (soFar : S
     generateErrorsComplexRecurseInner current concatedStr exitCondition (concated :: acc)
 
 private partial def generateErrorsComplexRecurse (current : Int) (exitCondition : Int) (acc : List Int) : List Int :=
-  dbg_trace "generateErrorsComplexRecurse: current = {current}, exitCondition = {exitCondition}, acc = {acc} "
   let concated := generateErrorsComplexRecurseInner current (toString current) exitCondition []
   if concated.length == 0 then
     acc
@@ -101,12 +100,11 @@ def partB (fileSuffix : String) : IO Unit := do
   IO.println s!"errors"
   IO.println s!"{errors}"
   let result := errors.foldl (· + ·) 0
-  IO.println s!"result"
-  IO.println s!"{result}"
+  IO.println s!"result:   {result}"
 
   if fileSuffix.toSlice.contains "sample" then
     let contents ← IO.FS.readFile s!"data/day_02_{fileSuffix}_expected_b.txt"
-    IO.println s!"expected: ({contents})"
+    IO.println s!"expected: {contents}"
 
 #eval! do
   -- private partial def generateErrorsComplexRecurseInner (current : Int) (soFar : String) (exitCondition : Int) (acc : List Int) : List Int :=
@@ -125,6 +123,17 @@ def partB (fileSuffix : String) : IO Unit := do
   let someGenerated := generateErrorsComplexRecurse 8 1000 []
   IO.println s!"someGenerated"
   IO.println s!"{someGenerated}"
+
+  -- for some reason i was missing                        824824824
+  let gen824 := generateErrorsComplexRecurseInner 824 "824" 1000000000 []
+  IO.println s!"gen824"
+  IO.println s!"{gen824}"
+
+  let gen824 := generateErrorsComplexRecurse 824 1000000000 []
+  IO.println s!"gen824"
+  IO.println s!"{gen824}"
+
   --partA "sample"
   --partA "real"
   partB "sample"
+  partB "real"
