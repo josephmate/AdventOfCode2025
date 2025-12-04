@@ -1,4 +1,4 @@
 -- This module serves as the root of the `AdventOfCode2026` library.
 -- Import modules here that should be built as part of the library.
-import AdventOfCode2025.Day1
-import AdventOfCode2025.Day2
+import AdventOfCode2025.Day01
+import AdventOfCode2025.Day02

@@ -1,7 +1,7 @@
 import Mathlib.Data.List.MinMax
 import Std.Data.HashSet
 
-namespace Day2
+namespace Day02
 
 
 private def parseLine (token : String) : Option (Int × Int) := do

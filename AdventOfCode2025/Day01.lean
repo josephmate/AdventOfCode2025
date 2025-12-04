@@ -1,4 +1,4 @@
-namespace Day1
+namespace Day01
 
 private def parseLine (line : String) : Option (Char × Int) := do
   -- Get first character (direction)
@@ -129,4 +129,4 @@ private def testInstr (name : String) (state : Int × Int) (instr : Char × Int)
   testInstr   "R1000" (50, 0) ('R', 1000) (50, 10)
   testInstr   "L1000" (50, 0) ('L', 1000) (50, 10)
   IO.println "Tests complete!"
-end Day1
+end Day01
