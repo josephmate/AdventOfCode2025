@@ -75,11 +75,11 @@ private partial def generateErrorsComplexRecurseInner (current : Int) (soFar : S
 
 private partial def generateErrorsComplexRecurse (current : Int) (exitCondition : Int) (acc : List Int) : List Int :=
   dbg_trace "generateErrorsComplexRecurse: current = {current}, exitCondition = {exitCondition}, acc = {acc} "
-  let concated := generateErrorsComplexRecurseInner current "" exitCondition []
+  let concated := generateErrorsComplexRecurseInner current (toString current) exitCondition []
   if concated.length == 0 then
     acc
   else
-    generateErrorsRecurse (current + 1) exitCondition (concated ++ acc)
+    generateErrorsComplexRecurse (current + 1) exitCondition (concated ++ acc)
 
 private def generateErrorsComplex(exitCondition : Int) : List (Int) :=
   generateErrorsComplexRecurse 1 exitCondition []
@@ -109,10 +109,6 @@ def partB (fileSuffix : String) : IO Unit := do
     IO.println s!"expected: ({contents})"
 
 #eval! do
-  --partA "sample"
-  --partA "real"
-  --partB "sample"
-
   -- private partial def generateErrorsComplexRecurseInner (current : Int) (soFar : String) (exitCondition : Int) (acc : List Int) : List Int :=
   let shouldHaveThreeNines := generateErrorsComplexRecurseInner 9 "" 1000 []
   IO.println s!"shouldHaveThreeNines"
@@ -129,3 +125,6 @@ def partB (fileSuffix : String) : IO Unit := do
   let someGenerated := generateErrorsComplexRecurse 8 1000 []
   IO.println s!"someGenerated"
   IO.println s!"{someGenerated}"
+  --partA "sample"
+  --partA "real"
+  partB "sample"
