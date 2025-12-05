@@ -37,9 +37,10 @@ def countForkLiftPositionsRecursion (paperMap : Array (Array Char)) (R : Nat) (C
   | 0, _ => acc
   | nextRow + 1, 0 => countForkLiftPositionsRecursion paperMap R C nextRow C acc
   | nextRow + 1, nextCol + 1 =>
+    let curr := getOrDefault2D paperMap R C nextRow nextCol '.'
     let adjacentPapers := countPapers paperMap R C nextRow nextCol
     let newList :=
-      if adjacentPapers < 4 then
+      if curr == '@' && adjacentPapers < 4 then
         (nextRow, nextCol) :: acc
       else
         acc
@@ -107,3 +108,4 @@ def partB (fileSuffix : String) : IO Unit := do
 
 #eval! do
   partA "sample"
+  partA "real"
