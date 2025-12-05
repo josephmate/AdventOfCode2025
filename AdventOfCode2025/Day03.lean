@@ -30,14 +30,13 @@ def maxWithIndex(list : List Int): Int × Int :=
   maxWithIndexRecurse list 0 (-1, -1)
 
 def calcBiggestNRecurse (N : Nat) (powerBank : List Int)(acc : List Int): List Int :=
-  if N == 0 then
-    acc
-  else
+match N with
+  | 0 => acc
+  | n + 1 =>
     let length := powerBank.length
     let (maxFront, idxFront) := maxWithIndex (powerBank.take (length-N+1))
     let subProblem := powerBank.drop (idxFront + 1).toNat?.get!
-    calcBiggestNRecurse (N-1) subProblem (maxFront :: acc)
-termination_by N
+    calcBiggestNRecurse n subProblem (maxFront :: acc)
 
 def calcBiggestN (N : Nat) (powerBank : List Int): Int :=
   let digits := (calcBiggestNRecurse N powerBank []).reverse
@@ -49,8 +48,6 @@ def partA (fileSuffix : String) : IO Unit := do
   IO.println "Running Day 3, Part A"
 
   let powerBanks ← readInputFile fileSuffix
-  IO.println s!"powerBanks"
-  IO.println s!"{powerBanks}"
 
   let partialResults := powerBanks.map (calcBiggestN 2)
   IO.println s!"partialResults"
@@ -68,6 +65,15 @@ def partA (fileSuffix : String) : IO Unit := do
 def partB (fileSuffix : String) : IO Unit := do
   IO.println "Running Day 3, Part B"
 
+  let powerBanks ← readInputFile fileSuffix
+
+  let partialResults := powerBanks.map (calcBiggestN 12)
+  IO.println s!"partialResults"
+  IO.println s!"{partialResults}"
+
+  let result := partialResults.foldl (· + ·) 0
+  IO.println s!"result:   {result}"
+
   if fileSuffix.toSlice.contains "sample" then
     let contents ← IO.FS.readFile s!"data/day_03_{fileSuffix}_expected_b.txt"
     IO.println s!"expected: {contents}"
@@ -75,3 +81,5 @@ def partB (fileSuffix : String) : IO Unit := do
 #eval! do
   partA "sample"
   partA "real"
+  partB "sample"
+  partB "real"
