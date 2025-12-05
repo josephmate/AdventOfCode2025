@@ -14,26 +14,36 @@ private def readInputFile (fileSuffix : String) : IO (List (List Int)) := do
   return lines.map toDigits
 
 
-def maxWithIndexRecurse(list : List Int) (afterIdx : Int) (currentIdx : Int) (acc : Int × Int) : Int × Int :=
-  let (maxSoFar, maxSoFarIdx) := acc
+def maxWithIndexRecurse(list : List Int) (currentIdx : Int) (acc : Int × Int) : Int × Int :=
+  let (maxSoFar, _) := acc
   match list with
   | [] => acc
   | head :: tail =>
     let nextAcc :=
-      if head > maxSoFar && currentIdx > afterIdx then
+      if head > maxSoFar then
         (head, currentIdx)
       else
         acc
-    maxWithIndexRecurse tail afterIdx (currentIdx+1) nextAcc
+    maxWithIndexRecurse tail (currentIdx+1) nextAcc
 
-def maxWithIndex(list : List Int) (afterIdx : Int): Int × Int :=
-  maxWithIndexRecurse list afterIdx 0 (-1, -1)
+def maxWithIndex(list : List Int): Int × Int :=
+  maxWithIndexRecurse list 0 (-1, -1)
 
-def calcBiggest(powerBank : List Int) : Int :=
-  let (maxFront, idxFront) := maxWithIndex powerBank.dropLast (-1)
-  let (maxOther, _) := maxWithIndex powerBank idxFront
+def calcBiggestNRecurse (N : Nat) (powerBank : List Int)(acc : List Int): List Int :=
+  if N == 0 then
+    acc
+  else
+    let length := powerBank.length
+    let (maxFront, idxFront) := maxWithIndex (powerBank.take (length-N+1))
+    let subProblem := powerBank.drop (idxFront + 1).toNat?.get!
+    calcBiggestNRecurse (N-1) subProblem (maxFront :: acc)
+termination_by N
 
-  (toString maxFront ++ toString maxOther).toNat!
+def calcBiggestN (N : Nat) (powerBank : List Int): Int :=
+  let digits := (calcBiggestNRecurse N powerBank []).reverse
+
+  let digitsStr := String.join (digits.map toString)
+  digitsStr.toNat!
 
 def partA (fileSuffix : String) : IO Unit := do
   IO.println "Running Day 3, Part A"
@@ -42,7 +52,7 @@ def partA (fileSuffix : String) : IO Unit := do
   IO.println s!"powerBanks"
   IO.println s!"{powerBanks}"
 
-  let partialResults := powerBanks.map calcBiggest
+  let partialResults := powerBanks.map (calcBiggestN 2)
   IO.println s!"partialResults"
   IO.println s!"{partialResults}"
 
@@ -52,6 +62,7 @@ def partA (fileSuffix : String) : IO Unit := do
   if fileSuffix.toSlice.contains "sample" then
     let contents ← IO.FS.readFile s!"data/day_03_{fileSuffix}_expected_a.txt"
     IO.println s!"expected: {contents}"
+
 
 
 def partB (fileSuffix : String) : IO Unit := do
