@@ -3,6 +3,23 @@ import Std.Data.HashSet
 
 namespace Day04
 
+
+def convertToSetOfTuplesRecurse (paperMap : Array (Array Char)) (R : Nat) (C : Nat) (r : Nat) (c : Nat) (acc : Std.HashSet (Int × Int)) : Std.HashSet (Int × Int) :=
+  match r, c with
+  | 0, _ => acc
+  | r' + 1, 0 =>
+    convertToSetOfTuplesRecurse paperMap R C r' C acc
+  | r' + 1, c' + 1 =>
+    let nextSet :=
+      if paperMap[r']![c']! == '@' then
+        acc.insert (r', c')
+      else
+        acc
+    convertToSetOfTuplesRecurse paperMap R C (r' + 1) c' nextSet
+
+def convertToSetOfTuples (paperMap : Array (Array Char)) (R : Nat) (C : Nat) : Std.HashSet (Int × Int) :=
+  convertToSetOfTuplesRecurse paperMap R C R C ∅
+
 def parse2DGrid (input : String) : Array (Array Char) :=
   input.splitOn "\n"
     |>.filter (· != "")
@@ -14,40 +31,26 @@ private def readInputFile (fileSuffix : String) : IO (Array (Array Char)) := do
   let contents ← IO.FS.readFile fileName
   return parse2DGrid contents
 
-def getOrDefault2D (paperMap : Array (Array Char)) (R : Nat) (C : Nat)  (r : Int) (c : Int) (default : Char): Char :=
-  if r >= 0 && r < R && c >= 0 && c < C then
-    paperMap[r.toNat]![c.toNat]!
-  else
-    default
-
-def countPapers (paperMap : Array (Array Char)) (R : Nat) (C : Nat)  (r : Nat) (c :Nat) : Nat :=
+def countPapers (paperMap : Std.HashSet (Int × Int))  (r : Int) (c : Int) : Nat :=
   ([
-    getOrDefault2D paperMap R C (r-1) (c-1) '.',
-    getOrDefault2D paperMap R C (r-1) (c+0) '.',
-    getOrDefault2D paperMap R C (r-1) (c+1) '.',
-    getOrDefault2D paperMap R C (r+0) (c-1) '.',
-    getOrDefault2D paperMap R C (r+0) (c+1) '.',
-    getOrDefault2D paperMap R C (r+1) (c-1) '.',
-    getOrDefault2D paperMap R C (r+1) (c+0) '.',
-    getOrDefault2D paperMap R C (r+1) (c+1) '.',
-  ].filter (. =='@')).length
+    ((r-1), (c-1)),
+    ((r-1), (c+0)),
+    ((r-1), (c+1)),
+    ((r+0), (c-1)),
+    ((r+0), (c+1)),
+    ((r+1), (c-1)),
+    ((r+1), (c+0)),
+    ((r+1), (c+1)),
+  ].filter (paperMap.contains ·)).length
 
-def countForkLiftPositionsRecursion (paperMap : Array (Array Char)) (R : Nat) (C : Nat) (r : Nat) (c : Nat) (acc : List (Nat × Nat)): List (Nat × Nat) :=
-  match r, c with
-  | 0, _ => acc
-  | nextRow + 1, 0 => countForkLiftPositionsRecursion paperMap R C nextRow C acc
-  | nextRow + 1, nextCol + 1 =>
-    let curr := getOrDefault2D paperMap R C nextRow nextCol '.'
-    let adjacentPapers := countPapers paperMap R C nextRow nextCol
-    let newList :=
-      if curr == '@' && adjacentPapers < 4 then
-        (nextRow, nextCol) :: acc
-      else
-        acc
-    countForkLiftPositionsRecursion paperMap R C (nextRow + 1) nextCol newList
-termination_by (r, c)
+def enoughPapers (paperMap : Std.HashSet (Int × Int)) (paperPosn : (Int × Int)) : Bool :=
+  let (r, c) := paperPosn
+  paperMap.contains paperPosn && (countPapers paperMap r c) < 4
 
-def printMapRecurse(paperMap : Array (Array Char)) (posns : Std.HashSet (Nat × Nat)) (R : Nat) (C : Nat)(r : Nat) (c : Nat): IO Unit := do
+def findForkLiftPositions (paperMap : Std.HashSet (Int × Int)) : Std.HashSet (Int × Int) :=
+  paperMap.filter (enoughPapers paperMap)
+
+def printMapRecurse (paperMap : Std.HashSet (Int × Int)) (posns : Std.HashSet (Int × Int)) (R : Nat) (C : Nat) (r : Nat) (c : Nat): IO Unit := do
   match r, c with
   | 0, _ => return
   | r' + 1, 0 =>
@@ -59,33 +62,31 @@ def printMapRecurse(paperMap : Array (Array Char)) (posns : Std.HashSet (Nat × 
     let char :=
       if posns.contains (r'', c'') then
         'x'
+      else if paperMap.contains (r'', c'') then
+        '@'
       else
-        paperMap[r'']![c'']!
+        '.'
     IO.print char
     printMapRecurse paperMap posns R C (r' + 1) c'
 
 termination_by (r, c)
 
-def printMap(paperMap : Array (Array Char)) (posns: List (Nat × Nat)) : IO Unit := do
-  let R := paperMap.size
-  let C := paperMap[0]!.size
-  printMapRecurse paperMap (Std.HashSet.ofList posns) R C R C
-
-def countForkLiftPositions (paperMap : Array (Array Char)) : List (Nat × Nat) :=
-  let R := paperMap.size
-  let C := paperMap[0]!.size
-  countForkLiftPositionsRecursion paperMap R C R C []
+def printMap (paperMap : Std.HashSet (Int × Int)) (posns : Std.HashSet (Int × Int)) (R : Nat) (C : Nat): IO Unit := do
+  printMapRecurse paperMap posns R C R C
 
 def partA (fileSuffix : String) : IO Unit := do
   IO.println "Running Day 4, Part A"
 
   let input ← readInputFile fileSuffix
   IO.println s!"input:\n{input}"
+  let R := input.size
+  let C := input[0]!.size
+  let paperMap := convertToSetOfTuples input R C
 
-  let potentialPositions := (countForkLiftPositions input)
-  printMap input potentialPositions
+  let potentialPositions := findForkLiftPositions paperMap
+  printMap paperMap potentialPositions R C
 
-  let result := potentialPositions.length
+  let result := potentialPositions.size
   IO.println s!"result:   {result}"
 
   if fileSuffix.toSlice.contains "sample" then
@@ -98,6 +99,9 @@ def partB (fileSuffix : String) : IO Unit := do
   IO.println "Running Day 4, Part B"
 
   let input ← readInputFile fileSuffix
+  let R := input.size
+  let C := input[0]!.size
+  let paperMap := convertToSetOfTuples input R C
 
   let result := 0
   IO.println s!"result:   {result}"
