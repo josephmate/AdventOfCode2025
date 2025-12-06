@@ -62,3 +62,14 @@ def partB (fileSuffix : String) : IO Unit := do
 #eval! do
   partA "sample"
   partA "real"
+
+  let input <- readInputFile "real"
+  let (ranges, _) := input
+  let sum := (ranges.map (fun range =>
+    let (lower, upper) := range
+    upper - lower
+    ))
+  |> List.foldl (· + ·) 0
+  IO.println s!"sum={sum}"
+  -- 424424047587505
+  -- too big to use a set with every number so we need to split up intersecting ranges
