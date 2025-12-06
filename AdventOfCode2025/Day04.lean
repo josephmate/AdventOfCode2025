@@ -94,6 +94,18 @@ def partA (fileSuffix : String) : IO Unit := do
     IO.println s!"expected: {contents}"
 
 
+partial def removeUntilCannotRecurse (paperMap : Std.HashSet (Int × Int)) (acc : Std.HashSet (Int × Int)): Std.HashSet (Int × Int) :=
+  let potentialPositions := findForkLiftPositions paperMap
+  if potentialPositions.isEmpty then
+    acc
+  else
+    let newAcc := potentialPositions.fold (fun set elem => set.insert elem) acc
+    let reducedMap := potentialPositions.fold (fun set elem => set.erase elem) paperMap
+    removeUntilCannotRecurse reducedMap newAcc
+
+
+def removeUntilCannot (paperMap : Std.HashSet (Int × Int)) : Std.HashSet (Int × Int) :=
+  removeUntilCannotRecurse paperMap ∅
 
 def partB (fileSuffix : String) : IO Unit := do
   IO.println "Running Day 4, Part B"
@@ -103,7 +115,7 @@ def partB (fileSuffix : String) : IO Unit := do
   let C := input[0]!.size
   let paperMap := convertToSetOfTuples input R C
 
-  let result := 0
+  let result := (removeUntilCannot paperMap).size
   IO.println s!"result:   {result}"
 
   if fileSuffix.toSlice.contains "sample" then
@@ -113,3 +125,5 @@ def partB (fileSuffix : String) : IO Unit := do
 #eval! do
   partA "sample"
   partA "real"
+  partB "sample"
+  partB "real"
