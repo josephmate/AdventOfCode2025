@@ -48,7 +48,7 @@ def partA (fileSuffix : String) : IO Unit := do
 def sumRanges (ranges : List (Nat × Nat)) : Int :=
   (ranges.map (fun range =>
       let (lower, upper) := range
-      upper - lower
+      upper - lower + 1
       ))
     |> List.foldl (· + ·) 0
 
@@ -135,3 +135,5 @@ def estimateProblemSize : IO Unit := do
   estimateProblemSize
   partB "sample"
   partB "real"
+  let test1 := combineIntersecting [(3,5), (10,14), (16,20), (12,18)]
+  IO.println s!"test1\n{test1.toList}"
