@@ -52,94 +52,69 @@ def sumRanges (ranges : List (Nat × Nat)) : Int :=
       ))
     |> List.foldl (· + ·) 0
 
-def findFirstIntersect (ranges : Std.HashSet (Nat × Nat)) : Option ( (Nat × Nat) × (Nat × Nat) ) :=
-  none -- TODO
-
-def split (a : (Nat × Nat)) (b : (Nat × Nat)) : ((Nat × Nat) × (Nat × Nat) × (Nat × Nat)) :=
+def distjoint (a : (Nat × Nat))  (b : (Nat × Nat)) : Bool :=
   let (a_1 , a_2) := a
   let (b_1 , b_2) := b
 
-  let ((lower_1, lower_2), (upper_1, upper_2)) :=
-    if a_1 < b_1 then ((a_1,a_2), (b_1, b_2))
-    else if b_1 < a_1 then ((b_1, b_2), (a_1, a_2))
-    else if a_2 < b_2 then ((a_1,a_2), (b_1, b_2))
-    else if b_2 < a_2 then ((b_1, b_2), (a_1, a_2))
-    else ((a_1,a_2), (b_1, b_2))
+  a_2 < b_1 || b_2 < a_1
 
-  -- case 1 lower == upper
-  --   _________________
-  --  /                 \
-  -- |                  |
-  -- .                  .
-  -- .                  .
-  -- |                  |
-  --  ₐ________________/
-  if a == b then
-    (a, a, a)
-  -- case 2 lower_1 == upper_1 && lower_2 < upper_2
-  --   _________
-  --  /         \
-  -- |          |
-  -- .          .
-  -- .                  .
-  -- |                  |
-  --  ₐ________________/
-  else if lower_1 == upper_1 && lower_2 < upper_2 then
-    -- okay to repeat, hashset will take care of it
-    ((lower_1,lower_2), (lower_2+1, upper_2), (lower_2+1, upper_2))
-  -- case 3 lower_1 < upper_1 && lower_2 == upper_2
-  --           _________
-  --          /         \
-  --         |          |
-  --         .          .
-  -- .                  .
-  -- |                  |
-  --  ₐ________________/
-  else if lower_1 < upper_1 && lower_2 == upper_2 then
-    -- okay to repeat, hashset will take care of it
-    ((lower_1, upper_1), (upper_1+1, upper_2), (upper_1+1, upper_2))
-  -- case 3 lower_1 < upper_1 && lower_2 > upper_2
-  --       _________
-  --      /         \
-  --     |          |
-  --     .          .
-  -- .                  .
-  -- |                  |
-  --  ₐ________________/
-  else if lower_1 < upper_1 && lower_2 == upper_2 then
-    -- okay to repeat, hashset will take care of it
-    ((lower_1, upper_1), (upper_1+1, upper_2), (upper_1+1, upper_2))
-  else
-    (a, a, b)
+def intersect (a : (Nat × Nat))  (b : (Nat × Nat)) : Bool :=
+  ! (distjoint a b)
 
+def findFirstInsertsectWith (val : (Nat × Nat)) (ranges : List (Nat × Nat)) : Option (Nat × Nat) :=
+  ranges.find? (intersect val)
 
-def splitFirst (ranges : Std.HashSet (Nat × Nat)) : Std.HashSet (Nat × Nat) :=
+def findFirstIntersectRecurse (ranges : List (Nat × Nat)) (acc : Option ( (Nat × Nat) × (Nat × Nat) )) : Option ( (Nat × Nat) × (Nat × Nat) ) :=
+  match acc, ranges with
+  | some val, _ => val
+  | none, [] => none
+  | none, head :: rest =>
+    let firstIntersectWith := (findFirstInsertsectWith head rest)
+    let newAcc := firstIntersectWith.map ( fun val => (head, val) )
+    findFirstIntersectRecurse
+      rest
+      newAcc
+
+def findFirstIntersect (ranges : Std.HashSet (Nat × Nat)) : Option ( (Nat × Nat) × (Nat × Nat) ) :=
+  findFirstIntersectRecurse ranges.toList none
+
+def combine (a : (Nat × Nat)) (b : (Nat × Nat)) : (Nat × Nat) :=
+  let (a_1 , a_2) := a
+  let (b_1 , b_2) := b
+
+  let lower :=
+    if a_1 < b_1 then a_1
+    else b_1
+  let upper :=
+    if a_2 > b_2 then a_2
+    else b_2
+
+  (lower, upper)
+
+def combineFirst (ranges : Std.HashSet (Nat × Nat)) : Std.HashSet (Nat × Nat) :=
   match findFirstIntersect ranges with
   | none => ranges
   | some (a, b) =>
-    let (left, middle, right) := split a b
     ranges.erase a
     |>.erase b
-    |>.insert left
-    |>.insert middle
-    |>.insert right
+    |>.insert (combine a b)
 
-partial def splitIntersectingRecurse (ranges : Std.HashSet (Nat × Nat)) (acc : Std.HashSet (Nat × Nat)): Std.HashSet (Nat × Nat) :=
+partial def combineIntersectingRecurse (ranges : Std.HashSet (Nat × Nat)) (acc : Std.HashSet (Nat × Nat)): Std.HashSet (Nat × Nat) :=
   if ranges.size == acc.size then
     acc
   else
-    splitIntersectingRecurse acc (splitFirst acc)
+    combineIntersectingRecurse acc (combineFirst acc)
 
-def splitIntersecting (ranges : List (Nat × Nat)) : Std.HashSet (Nat × Nat) :=
+def combineIntersecting (ranges : List (Nat × Nat)) : Std.HashSet (Nat × Nat) :=
   let hashedRanges := (Std.HashSet.ofList ranges)
-  splitIntersectingRecurse hashedRanges (splitFirst hashedRanges)
+  combineIntersectingRecurse hashedRanges (combineFirst hashedRanges)
 
 def partB (fileSuffix : String) : IO Unit := do
   IO.println "Running Day 5, Part B"
 
   let (ranges, _) ← readInputFile fileSuffix
 
-  let result := sumRanges (splitIntersecting ranges).toList
+  let result := sumRanges (combineIntersecting ranges).toList
   IO.println s!"result:   {result}"
 
   if fileSuffix.toSlice.contains "sample" then
