@@ -41,7 +41,7 @@ def distance (a : Coord) (b : Coord) : Int :=
   (
       (a.x - b.x)*(a.x - b.x)
     + (a.y - b.y)*(a.y - b.y)
-    + (a.x - b.z)*(a.z - b.z)
+    + (a.z - b.z)*(a.z - b.z)
   )
 
 def calcAllDistances (coords : List (Coord)) : List (Int × Coord × Coord) :=
@@ -126,29 +126,30 @@ def partA (fileSuffix : String) (numConnections : Nat): IO Unit := do
   IO.println "Running Day 8, Part A"
 
   let input ← readInputFile fileSuffix
-  IO.println s!"input:\n{input}"
+  --IO.println s!"input:\n{input}"
 
   let junctionCoords := parseJunctionCords input
-  IO.println s!"junctionCoords:\n{junctionCoords}"
+  --IO.println s!"junctionCoords:\n{junctionCoords}"
 
   let allDistances := calcAllDistances junctionCoords
   --IO.println s!"allDistances:\n{allDistances}"
 
   let sortedDistances := allDistances.mergeSort (fun a b => a.1 < b.1)
-  --IO.println s!"sortedDistances:\n{sortedDistances}"
+  --let printableDistance := String.intercalate "\n" (sortedDistances.map toString)
+  --IO.println s!"sortedDistances:\n{printableDistance}"
 
   let connectedComponents := connectNJunctions junctionCoords sortedDistances numConnections
-  IO.println s!"connectedComponents:\n{connectedComponents.coordToComponent.toList}"
+  --IO.println s!"connectedComponents:\n{connectedComponents.coordToComponent.toList}"
 
   let componentsBySize := connectedComponents.componentToCoord.toList
   |> List.map (fun (id, coords) => (coords.size, id ,coords))
   |> List.mergeSort (le := fun a b => b.1 < a.1)
 
-  let printable := String.intercalate "\n" (componentsBySize.map (fun (a,b,c) => s!"{toString a}, {toString b},{toString c.toList}"))
-  IO.println s!"componentsBySize:\n{printable}"
-  IO.println s!"componentsBySize[0]!.1:   {componentsBySize[0]!.1}"
-  IO.println s!"componentsBySize[1]!.1:   {componentsBySize[1]!.1}"
-  IO.println s!"componentsBySize[2]!.1:   {componentsBySize[2]!.1}"
+  --let printable := String.intercalate "\n" (componentsBySize.map (fun (a,b,c) => s!"{toString a}, {toString b},{toString c.toList}"))
+  --IO.println s!"componentsBySize:\n{printable}"
+  --IO.println s!"componentsBySize[0]!.1:   {componentsBySize[0]!.1}"
+  --IO.println s!"componentsBySize[1]!.1:   {componentsBySize[1]!.1}"
+  --IO.println s!"componentsBySize[2]!.1:   {componentsBySize[2]!.1}"
 
   let result := componentsBySize[0]!.1 * componentsBySize[1]!.1 * componentsBySize[2]!.1
   IO.println s!"result:   {result}"
@@ -175,4 +176,4 @@ def partB (fileSuffix : String) : IO Unit := do
 
 #eval! do
   partA "sample" 10
-  --partA "real" 1000
+  partA "real" 1000
