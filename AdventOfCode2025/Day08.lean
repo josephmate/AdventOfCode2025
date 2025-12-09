@@ -71,13 +71,13 @@ def initConnectedComponents (coords : List (Coord)) : ConnectedComponents :=
 def findNextClosestNotConnected
     (sortedDistance : List (Int × Coord × Coord))
     (connectedComponents : ConnectedComponents)
-    : (Coord × Coord × List (Int × Coord × Coord)) :=
+    : Option (Coord × Coord × List (Int × Coord × Coord)) :=
   match sortedDistance with
-  | [] => ( ⟨ -1, -1, -1 ⟩, ⟨ -1, -1, -1 ⟩, [])
+  | [] => none
   | (_, a, b) :: tail =>
     --i suspect I didn't need this check
     --if connectedComponents.coordToComponent.get! a != connectedComponents.coordToComponent.get! b then
-      (a, b, tail)
+      some (a, b, tail)
     --else
     --  findNextClosestNotConnected tail connectedComponents
 
@@ -110,9 +110,11 @@ def connectNJunctionsRecurse
   match numJunctions with
   | 0 => connectedComponents
   | n + 1 =>
-    let (a, b, rest) := findNextClosestNotConnected sortedDistance connectedComponents
-    let newConnectedComponents := addConnection a b connectedComponents
-    connectNJunctionsRecurse coords rest n newConnectedComponents
+    match findNextClosestNotConnected sortedDistance connectedComponents with
+    | none => connectedComponents
+    | some (a, b, rest) =>
+      let newConnectedComponents := addConnection a b connectedComponents
+      connectNJunctionsRecurse coords rest n newConnectedComponents
 
 def connectNJunctions
     (coords : List (Coord))
@@ -161,13 +163,50 @@ def partA (fileSuffix : String) (numConnections : Nat): IO Unit := do
     let contents ← IO.FS.readFile s!"data/day_08_{fileSuffix}_expected_a.txt"
     IO.println s!"expected: {contents}"
 
+
+partial def connectNJunctionsUntilDoneRecurse
+    (sortedDistance : List (Int × Coord × Coord))
+    (connectedComponents : ConnectedComponents)
+    : (Option (Int) × ConnectedComponents) :=
+  match findNextClosestNotConnected sortedDistance connectedComponents with
+  | none => (none, connectedComponents)
+  | some (a, b, rest) =>
+    let newConnectedComponents := addConnection a b connectedComponents
+    if newConnectedComponents.componentToCoord.size == 1 then
+      let result := a.1 * b.1
+      (result, newConnectedComponents)
+    else
+      connectNJunctionsUntilDoneRecurse rest newConnectedComponents
+
+def connectNJunctionsUntilDone
+    (coords : List (Coord))
+    (sortedDistance : List (Int × Coord × Coord))
+    : (Option (Int) × ConnectedComponents) :=
+  connectNJunctionsUntilDoneRecurse sortedDistance (initConnectedComponents coords)
+
 def partB (fileSuffix : String) : IO Unit := do
   IO.println "Running Day 8, Part B"
+  let start ← IO.monoMsNow
 
   let input ← readInputFile fileSuffix
 
-  let result := 0
+  let junctionCoords := parseJunctionCords input
+  --IO.println s!"junctionCoords:\n{junctionCoords}"
+
+  let allDistances := calcAllDistances junctionCoords
+  --IO.println s!"allDistances:\n{allDistances}"
+
+  let sortedDistances := allDistances.mergeSort (fun a b => a.1 < b.1)
+  --let printableDistance := String.intercalate "\n" (sortedDistances.map toString)
+  --IO.println s!"sortedDistances:\n{printableDistance}"
+
+  let (result, connectedComponents) := connectNJunctionsUntilDone junctionCoords sortedDistances
+  --IO.println s!"connectedComponents:\n{connectedComponents.coordToComponent.toList}"
+
   IO.println s!"result:   {result}"
+
+  let stop ← IO.monoMsNow
+  IO.println s!"took {stop - start}ms"
 
   if fileSuffix.toSlice.contains "sample" then
     let contents ← IO.FS.readFile s!"data/day_08_{fileSuffix}_expected_b.txt"
@@ -177,3 +216,5 @@ def partB (fileSuffix : String) : IO Unit := do
 #eval! do
   partA "sample" 10
   partA "real" 1000
+  partB "sample"
+  partB "real"
