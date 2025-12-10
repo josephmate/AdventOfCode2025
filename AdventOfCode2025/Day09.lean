@@ -49,7 +49,7 @@ def area (a : Coord) (b : Coord) : Int :=
       (a.y, b.y)
     else
       (b.y, a.y)
-  (biggerX - smallerX)*(biggerY - smallerY)
+  (biggerX - smallerX + 1)*(biggerY - smallerY + 1)
 
 def calcAllAreas (coords : List (Coord)) : List (Int × Coord × Coord) :=
   (
@@ -93,7 +93,6 @@ def partA
 
   let input ← readInputFile fileSuffix
   let redTiles := parseRedTiles input
-  IO.println s!"redTiles:   {redTiles}"
 
   let (result, a, b) := calcBiggestArea redTiles
   IO.println s!"a b:   {a} {b}"
@@ -124,3 +123,10 @@ def partB
 
 #eval! do
   partA "sample"
+  let input ← readInputFile "sample"
+  let redTiles := parseRedTiles input
+  let areas := calcAllAreas redTiles
+  let areasStr := String.intercalate "\n" (areas.map toString)
+  IO.println s!"areas: {areasStr}"
+
+  partA "real"
