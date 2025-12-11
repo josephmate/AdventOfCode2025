@@ -41,7 +41,7 @@ def parseToggles
     (tokens : List String)
     : Array (List Nat) :=
   let sublist :=
-    tokens.drop 2
+    tokens.drop 1
     |> List.dropLast
   --dbg_trace s!"sublist={sublist}"
 
@@ -104,7 +104,7 @@ partial def calcMinRecurse
     (soFar : Std.HashSet Nat)
     (acc : Option Nat)
     : Option Nat :=
-  dbg_trace s!"lights={lights} idx={idx} soFar={soFar.toList} acc={acc}"
+  --dbg_trace s!"lights={lights} idx={idx} soFar={soFar.toList} acc={acc}"
   if (lights == machineSetup.target) && ((acc == none) || soFar.size < acc.get!) then
     some soFar.size
   else if idx >= machineSetup.toggles.size then
@@ -179,8 +179,8 @@ def partB
   IO.println s!"took {stop - start}ms"
 
 #eval! do
-  --partA "sample"
-  --partA "real"
+  partA "sample"
+  partA "real"
 
   let failing : MachineSetup :=
     ⟨
@@ -190,4 +190,4 @@ def partB
       #[41, 41, 44, 60, 4, 28, 36, 48, 58],
     ⟩
 
-  calcMin failing
+  --calcMin failing
