@@ -45,7 +45,8 @@ def parseToggles
     |> List.dropLast
   dbg_trace s!"sublist={sublist}"
 
-  let parensDropped := sublist.map (fun token => token.replace "(" "" |> String.replace ")" "")
+  let parensDropped : List String := sublist.map (fun token => token.replace "(" "")
+    |> List.map (fun token => token.replace ")" "")
   dbg_trace s!"parensDropped={parensDropped}"
 
 
@@ -53,13 +54,20 @@ def parseToggles
   |> List.map (fun natStrs => natStrs.map (String.toNat!))
   |> List.toArray
 
+def trace {α : Type} [ToString α] (msg : String) (x : α) : α :=
+  dbg_trace s!"{msg}: {x}"
+  x
+
 def parseJoltages
     (tokens : List String)
     : Array Nat :=
-  tokens.getLast!
-  |> String.replace "{" ""
-  |> String.replace "}" ""
-  |> String.splitOn ","
+  let lastToken := tokens.getLast!
+  dbg_trace s!"lastToken={lastToken}"
+  let frontReplaced := lastToken.replace "{" ""
+  dbg_trace s!"frontReplaced={frontReplaced}"
+  let endReplaced := frontReplaced.replace "}" ""
+  dbg_trace s!"endReplaced={endReplaced}"
+  endReplaced.splitOn ","
   |> List.map (String.toNat!)
   |> List.toArray
 
@@ -117,3 +125,9 @@ def partB
 
 #eval! do
   partA "sample"
+
+  let tokens := ["(3)", "(1,3)", "(2)", "(2,3)", "(0,2)", "(0,1)"]
+  IO.println s!"tokens={tokens}"
+  let parensDropped := tokens.map (fun token : String => token.replace "(" "")
+  |> List.map (fun token : String => token.replace ")" "")
+  IO.println s!"parensDropped={parensDropped}"
