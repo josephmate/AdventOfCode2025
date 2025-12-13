@@ -25,23 +25,31 @@ private def parseGraph
 
 partial def countAllPathsRecurse
     (graph : Std.HashMap String (List String))
+    (endNode : String)
     (currentNode : String)
     (visited : Std.HashSet String)
+    (depth : Nat)
     (acc : Nat)
     : Nat :=
-  match currentNode with
-  | "out" => acc + 1
-  | currentNode =>
+  let visitedStr := String.intercalate "," visited.toList
+  dbg_trace s!"currentNode={currentNode} depth={depth} acc={acc} visited={visitedStr}"
+  if currentNode == endNode then
+    acc + 1
+  else if depth >= 10 then
+    acc
+  else
     (graph.getD currentNode [])
     |>.filter (fun nextNode => !(visited.contains nextNode))
     |>.foldl (fun acc nextNode =>
-      countAllPathsRecurse graph nextNode (visited.insert nextNode) acc
+      countAllPathsRecurse graph endNode nextNode (visited.insert nextNode) (depth +1) acc
     ) acc
 
 def countAllPaths
     (graph : Std.HashMap String (List String))
+    (startNode : String)
+    (endNode : String)
     : Nat :=
-  countAllPathsRecurse graph "you" ∅ 0
+  countAllPathsRecurse graph endNode startNode ∅ 0 0
 
 def partA
     (fileSuffix : String)
@@ -51,10 +59,10 @@ def partA
 
   let input ← readInputFile fileSuffix
   let graph := parseGraph input
-  --let graphStr := String.intercalate "\n" (graph.toList.map toString)
-  --IO.println s!"graph:\n{graphStr}"
+  let graphStr := String.intercalate "\n" (graph.toList.map toString)
+  IO.println s!"graph:\n{graphStr}"
 
-  let result := countAllPaths graph
+  let result := countAllPaths graph "you" "out"
   IO.println s!"result:   {result}"
 
   if fileSuffix.toSlice.contains "sample" then
@@ -70,16 +78,22 @@ def partB
   let start ← IO.monoMsNow
 
   let input ← readInputFile fileSuffix
+  let graph := parseGraph input
+  let graphStr := String.intercalate "\n" (graph.toList.map toString)
+  IO.println s!"graph:\n{graphStr}"
 
-  let result := 0
+  let result := countAllPaths graph "svr" "out"
   IO.println s!"result:   {result}"
 
   if fileSuffix.toSlice.contains "sample" then
-    let contents ← IO.FS.readFile s!"data/day_11_{fileSuffix}_expected_b.txt"
+    let contents ← IO.FS.readFile s!"data/day_11_{fileSuffix}_expected.txt"
     IO.println s!"expected: {contents}"
   let stop ← IO.monoMsNow
   IO.println s!"took {stop - start}ms"
 
 #eval! do
   partA "sample"
-  partA "real"
+  --partA "real"
+
+  partB "sample_b"
+  --partB "real"
