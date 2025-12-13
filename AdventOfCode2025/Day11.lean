@@ -11,6 +11,38 @@ private def readInputFile
   let contents ← IO.FS.readFile fileName
   return contents
 
+
+private def parseGraph
+    (content : String)
+    : Std.HashMap String (List String) :=
+
+    content.splitOn "\n"
+    |>.map (fun line => line.splitOn ": ")
+    |>.map (fun tokens => (tokens[0]!, tokens[1]!))
+    |>.map (fun (key, vals) => (key, vals.splitOn " "))
+    |>.foldl (fun acc (key, vals) => acc.insert key vals) ∅
+
+
+partial def countAllPathsRecurse
+    (graph : Std.HashMap String (List String))
+    (currentNode : String)
+    (visited : Std.HashSet String)
+    (acc : Nat)
+    : Nat :=
+  match currentNode with
+  | "out" => acc + 1
+  | currentNode =>
+    (graph.getD currentNode [])
+    |>.filter (fun nextNode => !(visited.contains nextNode))
+    |>.foldl (fun acc nextNode =>
+      countAllPathsRecurse graph nextNode (visited.insert nextNode) acc
+    ) acc
+
+def countAllPaths
+    (graph : Std.HashMap String (List String))
+    : Nat :=
+  countAllPathsRecurse graph "you" ∅ 0
+
 def partA
     (fileSuffix : String)
     : IO Unit := do
@@ -18,8 +50,11 @@ def partA
   IO.println "Running Day 11, Part A"
 
   let input ← readInputFile fileSuffix
+  let graph := parseGraph input
+  --let graphStr := String.intercalate "\n" (graph.toList.map toString)
+  --IO.println s!"graph:\n{graphStr}"
 
-  let result := 0
+  let result := countAllPaths graph
   IO.println s!"result:   {result}"
 
   if fileSuffix.toSlice.contains "sample" then
@@ -47,3 +82,4 @@ def partB
 
 #eval! do
   partA "sample"
+  partA "real"
