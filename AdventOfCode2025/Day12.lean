@@ -61,6 +61,21 @@ private def parseInput
 
   ⟨ presents , parseRequests chunks.getLast! ⟩
 
+def solve
+    (problem : Problem)
+    : Nat :=
+  problem.requests.filter (fun request =>
+    let requestArea := request.amounts.mapIdx (fun idx request =>
+      problem.presents[idx]! * request
+    )
+    |>.sum
+
+    let availableArea := request.rows * request.cols
+
+    requestArea <= availableArea
+  )
+  |>.length
+
 def partA
     (fileSuffix : String)
     : IO Unit := do
@@ -71,7 +86,7 @@ def partA
   let problem := parseInput input
   IO.println s!"problem:\n{problem}"
 
-  let result := 0
+  let result := solve problem
   IO.println s!"result:   {result}"
 
   if fileSuffix.toSlice.contains "sample" then
@@ -99,3 +114,4 @@ def partB
 
 #eval! do
   partA "sample"
+  partA "real"
