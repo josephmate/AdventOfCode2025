@@ -11,6 +11,56 @@ private def readInputFile
   let contents ← IO.FS.readFile fileName
   return contents
 
+structure Request where
+  rows : Nat
+  cols : Nat
+  amounts : List Nat
+  deriving Repr, BEq, Hashable
+
+instance : ToString Request where
+  toString c := s!"rows={c.rows},cols={c.cols}\namounts=\n{c.amounts}\n"
+
+structure Problem where
+  presents : Array Nat
+  requests : List Request
+  deriving Repr, BEq, Hashable
+
+instance : ToString Problem where
+  toString c := s!"presents={c.presents}\nrequests={c.requests}"
+
+private def parseRequest
+    (content : String)
+    : Request :=
+  let tokens := content.splitOn ": "
+  let front := tokens[0]!
+  let back := tokens[1]!
+  let dims := front.splitOn "x"
+  let rows := dims[0]!.toNat!
+  let cols := dims[1]!.toNat!
+
+  let requests := back.splitOn " "
+  |>.map String.toNat!
+
+  ⟨ rows, cols, requests ⟩
+
+private def parseRequests
+    (content : String)
+    : List Request :=
+
+  content.splitOn "\n"
+  |>.map parseRequest
+
+private def parseInput
+    (content : String)
+    : Problem :=
+  let chunks := content.splitOn "\n\n"
+
+  let presents := chunks.take 6
+  |>.map (fun present => present.toList.filter (· == '#') |>.length)
+  |>.toArray
+
+  ⟨ presents , parseRequests chunks.getLast! ⟩
+
 def partA
     (fileSuffix : String)
     : IO Unit := do
@@ -18,6 +68,8 @@ def partA
   IO.println "Running Day 12, Part A"
 
   let input ← readInputFile fileSuffix
+  let problem := parseInput input
+  IO.println s!"problem:\n{problem}"
 
   let result := 0
   IO.println s!"result:   {result}"
